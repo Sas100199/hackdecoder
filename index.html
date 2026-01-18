@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ultimate 10-Level Decoder Challenge</title>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+        color: #0f0;
+        font-family: "Courier New", monospace;
+        overflow-x: hidden;
+      }
+
+      .container {
+        padding: 30px;
+      }
+
+      input,
+      button {
+        background: black;
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background: #0f0;
+        color: black;
+        cursor: pointer;
+      }
+
+      #hint {
+        margin-top: 15px;
+        color: #ff0;
+        display: none;
+      }
+
+      #attempts {
+        margin-top: 10px;
+      }
+
+      .encoded {
+        margin-top: 15px;
+        opacity: 0.15;
+        user-select: all;
+        font-size: 16px;
+      }
+
+      .red-text {
+        color: red;
+        background: red;
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      #win {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: black;
+        color: #0f0;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      #win img {
+        width: 300px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>🚨 Ultimate 10-Level Decoder Challenge</h1>
+      <div id="question"></div>
+      <div id="encoded" class="encoded"></div>
+
+      <input id="answer" placeholder="Enter decoded answer" />
+      <br />
+      <button onclick="checkAnswer()">SUBMIT</button>
+
+      <div id="attempts">Attempts left: <span id="count">3</span></div>
+      <div id="hint"></div>
+    </div>
+
+    <div id="win">
+      <h1>🏆 ALL LEVELS CLEARED</h1>
+      <p>You decoded all challenges!</p>
+      <img src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif" />
+    </div>
+
+    <script>
+      // ==================== LEVELS ====================
+      const levels = [
+        // Physical & Tactile Decoders
+        {
+          question:
+            "🔴 Level 1: Red Lens Decoder. Reveal hidden text using a red filter.",
+          encoded: "<div class='red-text'>U0VFRCBUSFJPVUFH</div>", // Base64 of "SEED THROUGH"
+          answer: "SEED THROUGH",
+          hints: [
+            "Use red lens or adjust color.",
+            "Text is Base64 encoded.",
+            "Decode Base64 to get answer.",
+          ],
+        },
+
+        {
+          question: "🌀 Level 2: Cryptex mini puzzle box code (ROT13).",
+          encoded: "FRPERG",
+          answer: "SECRET",
+          hints: [
+            "Letters rotated by 13 positions.",
+            "Use ROT13 decoder online.",
+            "SECRET is the original text.",
+          ],
+        },
+
+        {
+          question: "🔄 Level 3: Caesar Cipher Wheel. Shift letters +3.",
+          encoded: "KHDN",
+          answer: "HEAD",
+          hints: [
+            "Shift each letter backward by 3.",
+            "Use Caesar Cipher logic.",
+            "HEAD is correct.",
+          ],
+        },
+
+        {
+          question:
+            "📜 Level 4: Slider/Scytale Decoder (Transposition). Arrange letters around a cylinder.",
+          encoded: "HLE OL WDL R",
+          answer: "HELLO WORLD",
+          hints: [
+            "Letters rearranged via Scytale.",
+            "Align properly around cylinder.",
+            "HELLO WORLD is the phrase.",
+          ],
+        },
+
+        {
+          question:
+            "🪞 Level 5: Mirror Decoder (Anamorphic). Reverse the letters.",
+          encoded: "DLROW OLLEH",
+          answer: "HELLO WORLD",
+          hints: [
+            "Read in a mirror.",
+            "Reverse letters to decode.",
+            "HELLO WORLD is the answer.",
+          ],
+        },
+
+        // Puzzle & Logical Decoders
+        {
+          question:
+            "✏️ Level 6: Substitution Cipher Table. A=1, B=2... Decode '8-1-3-11-5-18'.",
+          encoded: "8-1-3-11-5-18",
+          answer: "HACKER",
+          hints: [
+            "Map numbers to letters A=1.",
+            "Convert sequence to letters.",
+            "HACKER is correct.",
+          ],
+        },
+
+        {
+          question: "🟩 Level 7: Polybius Square. Decode '23 15 42 15 34'.",
+          encoded: "23 15 42 15 34",
+          answer: "HELLO",
+          hints: [
+            "Polybius 5x5 grid: row-column.",
+            "Convert pairs to letters.",
+            "HELLO is the result.",
+          ],
+        },
+
+        {
+          question:
+            "📚 Level 8: Book Cipher. Use page-line-word notation '2-1-3 1-2-1 4-1-2'.",
+          encoded: "2-1-3 1-2-1 4-1-2",
+          answer: "KEY",
+          hints: [
+            "Follow Page-Line-Word sequence.",
+            "Extract letters accordingly.",
+            "KEY is the answer.",
+          ],
+        },
+
+        // Digital & Technical Decoders
+        {
+          question: "💻 Level 9: Binary Converter. Decode '01001000 01001001'.",
+          encoded: "01001000 01001001",
+          answer: "HI",
+          hints: [
+            "Convert each 8-bit binary to ASCII.",
+            "Use Binary to Text tool.",
+            "HI is the decoded text.",
+          ],
+        },
+
+        {
+          question: "📡 Level 10: Morse Code. Decode '.... .- -.-. -.- . .-.'",
+          encoded: ".... .- -.-. -.- . .-.",
+          answer: "HACKER",
+          hints: [
+            "Use standard Morse Code chart.",
+            "Convert dots/dashes to letters.",
+            "HACKER is correct.",
+          ],
+        },
+      ];
+
+      let level = 0;
+      let attempts = 3;
+
+      const questionBox = document.getElementById("question");
+      const encodedBox = document.getElementById("encoded");
+      const hintBox = document.getElementById("hint");
+      const countBox = document.getElementById("count");
+
+      loadLevel();
+
+      function loadLevel() {
+        attempts = 3;
+        countBox.textContent = attempts;
+        hintBox.style.display = "none";
+        document.getElementById("answer").value = "";
+        questionBox.innerHTML = levels[level].question;
+        encodedBox.innerHTML = levels[level].encoded;
+      }
+
+      function checkAnswer() {
+        const input = document
+          .getElementById("answer")
+          .value.trim()
+          .toUpperCase();
+        const correct = levels[level].answer.toUpperCase();
+
+        if (input === correct) {
+          level++;
+          if (level === levels.length) {
+            document.querySelector(".container").style.display = "none";
+            document.getElementById("win").style.display = "flex";
+            return;
+          }
+          loadLevel();
+          return;
+        }
+
+        attempts--;
+        countBox.textContent = attempts;
+        hintBox.style.display = "block";
+        hintBox.textContent =
+          levels[level].hints[3 - attempts - 1] || "Think carefully...";
+
+        if (attempts <= 0) {
+          alert("❌ LEVEL FAILED, try again.");
+          loadLevel();
+        }
+      }
+    </script>
+  </body>
+</html>
